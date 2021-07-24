@@ -1,0 +1,3 @@
+rootProject.name = "MultiplyFilePicker"
+include ':app'
+include ':libraries:multiply_file_picker'
