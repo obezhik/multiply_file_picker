@@ -1,14 +1,18 @@
 package com.obezhik.multiply_file_picker
 
+
 import android.net.Uri
 import androidx.activity.ComponentActivity
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.ActivityResultRegistry
 import androidx.activity.result.contract.ActivityResultContracts
-
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
 import java.io.File
+import java.net.URI
+
 
 class MultiplyFilePicker(private var activity: ComponentActivity, private var mRegister: ActivityResultRegistry) : DefaultLifecycleObserver {
 
@@ -28,7 +32,6 @@ class MultiplyFilePicker(private var activity: ComponentActivity, private var mR
             ActivityResultContracts.GetMultipleContents(),
             this::recipient
         )
-
     }
 
     fun selectImage(callBack: (files: ArrayList<File>) -> Unit){
@@ -42,9 +45,14 @@ class MultiplyFilePicker(private var activity: ComponentActivity, private var mR
     }
 
     private fun recipient(uris: List<Uri>){
-        uris.map { File(it.path) }.let {
-            mResult.invoke(it as ArrayList<File>)
+        activity.lifecycleScope.launch {
+            FileUtil.from(activity, uris).let {
+                mResult.invoke(it as ArrayList<File>)
+            }
         }
 
     }
+
+
+
 }
