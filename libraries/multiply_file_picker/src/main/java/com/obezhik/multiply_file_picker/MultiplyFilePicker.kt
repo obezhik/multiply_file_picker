@@ -20,12 +20,12 @@ class MultiplyFilePicker(private var activity: ComponentActivity, private var mR
 
     constructor(activity: ComponentActivity): this(activity, activity.activityResultRegistry){
         lifecycle = activity.lifecycle
-        lifecycle.addObserver(this)
+        registerObservables()
     }
 
     constructor(fragment: Fragment): this(fragment.requireActivity(), fragment.requireActivity().activityResultRegistry) {
         lifecycle = fragment.lifecycle
-        lifecycle.addObserver(this)
+       registerObservables()
     }
 
     private lateinit var lifecycle: Lifecycle
@@ -52,6 +52,10 @@ class MultiplyFilePicker(private var activity: ComponentActivity, private var mR
     fun selectAny(callBack: (files: ArrayList<File>) -> Unit){
         mResult = callBack
         mLauncher.launch("*/*")
+    }
+
+    private fun registerObservables() = lifecycle.apply {
+        addObserver(this@MultiplyFilePicker)
     }
 
     fun removeObservables(){
