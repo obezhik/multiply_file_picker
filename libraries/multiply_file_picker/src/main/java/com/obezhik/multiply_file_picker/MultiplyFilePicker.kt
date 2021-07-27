@@ -6,7 +6,9 @@ import androidx.activity.ComponentActivity
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.ActivityResultRegistry
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.fragment.app.Fragment
 import androidx.lifecycle.DefaultLifecycleObserver
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
@@ -17,8 +19,16 @@ import java.net.URI
 class MultiplyFilePicker(private var activity: ComponentActivity, private var mRegister: ActivityResultRegistry) : DefaultLifecycleObserver {
 
     constructor(activity: ComponentActivity): this(activity, activity.activityResultRegistry){
-        activity.lifecycle.addObserver(this)
+        lifecycle = activity.lifecycle
+        lifecycle.addObserver(this)
     }
+
+    constructor(fragment: Fragment): this(fragment.requireActivity(), fragment.requireActivity().activityResultRegistry) {
+        lifecycle = fragment.lifecycle
+        lifecycle.addObserver(this)
+    }
+
+    private lateinit var lifecycle: Lifecycle
 
     private lateinit var mLauncher: ActivityResultLauncher<String>
 
@@ -42,6 +52,10 @@ class MultiplyFilePicker(private var activity: ComponentActivity, private var mR
     fun selectAny(callBack: (files: ArrayList<File>) -> Unit){
         mResult = callBack
         mLauncher.launch("*/*")
+    }
+
+    fun removeObservables(){
+        lifecycle.removeObserver(this)
     }
 
     private fun recipient(uris: List<Uri>){
