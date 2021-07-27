@@ -68,9 +68,5 @@ class MultiplyFilePicker(private var activity: ComponentActivity, private var mR
                 mResult.invoke(it as ArrayList<File>)
             }
         }
-
     }
-
-
-
 }
