@@ -1,11 +1,13 @@
 package com.obezhik.multiply_file_picker
 
 
+import android.Manifest
 import android.net.Uri
 import androidx.activity.ComponentActivity
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.ActivityResultRegistry
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.Lifecycle
@@ -13,7 +15,9 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
 import java.io.File
-import java.net.URI
+import java.io.IOException
+import java.util.*
+import kotlin.collections.ArrayList
 
 
 class MultiplyFilePicker(private var activity: ComponentActivity, private var mRegister: ActivityResultRegistry) : DefaultLifecycleObserver {
@@ -28,30 +32,56 @@ class MultiplyFilePicker(private var activity: ComponentActivity, private var mR
        registerObservables()
     }
 
+    private val IMAGE_EXTENSION = ".jpg"
+
     private lateinit var lifecycle: Lifecycle
 
-    private lateinit var mLauncher: ActivityResultLauncher<String>
+    private lateinit var mFileLauncher: ActivityResultLauncher<String>
+    private lateinit var mPermissionsLauncher: ActivityResultLauncher<Array<String>>
+    private lateinit var mPermissionLauncher: ActivityResultLauncher<String>
+    private lateinit var mCameraLauncher: ActivityResultLauncher<Uri>
 
-    private lateinit var mResult: (files: ArrayList<File>) -> Unit
+    private lateinit var mFilesResult: (files: ArrayList<File>) -> Unit
+    private lateinit var mPhotoResult: (result: Any) -> Unit
+    private lateinit var mPermissionsResult: (result: Map<String, Boolean>) -> Unit
+    private lateinit var mPermissionResult: (success:  Boolean) -> Unit
+
+    private lateinit var photoFile: File
+
 
     override fun onCreate(owner: LifecycleOwner) {
         super.onCreate(owner)
-        mLauncher = mRegister.register(
+        mPermissionsLauncher = mRegister.register(
+            "permissions",
+            owner,
+            ActivityResultContracts.RequestMultiplePermissions()
+        ){
+            mPermissionsResult.invoke(it)
+        }
+
+        mPermissionLauncher = mRegister.register(
+            "permission",
+            owner,
+            ActivityResultContracts.RequestPermission()
+        ){
+            mPermissionResult.invoke(it)
+        }
+
+        mFileLauncher = mRegister.register(
             "filePicker",
             owner,
             ActivityResultContracts.GetMultipleContents(),
-            this::recipient
+            this::recipientFiles
         )
-    }
 
-    fun selectImage(callBack: (files: ArrayList<File>) -> Unit){
-        mResult = callBack
-        mLauncher.launch("image/*")
-    }
+        mCameraLauncher = mRegister.register(
+            "cameraPicker",
+            owner,
+            ActivityResultContracts.TakePicture(),
+            this::recipientPhoto
+        )
 
-    fun selectAny(callBack: (files: ArrayList<File>) -> Unit){
-        mResult = callBack
-        mLauncher.launch("*/*")
+
     }
 
     private fun registerObservables() = lifecycle.apply {
@@ -62,11 +92,78 @@ class MultiplyFilePicker(private var activity: ComponentActivity, private var mR
         lifecycle.removeObserver(this)
     }
 
-    private fun recipient(uris: List<Uri>){
+  //<editor-fold desc="takeFile">
+    fun selectImage(callBack: (files: ArrayList<File>) -> Unit){
+        mFilesResult = callBack
+        mFileLauncher.launch("image/*")
+    }
+
+    fun selectAnyFiles(callBack: (files: ArrayList<File>) -> Unit){
+        mFilesResult = callBack
+        mFileLauncher.launch("*/*")
+    }
+
+    private fun recipientFiles(uris: List<Uri>){
         activity.lifecycleScope.launch {
             FileUtil.from(activity, uris).let {
-                mResult.invoke(it as ArrayList<File>)
+                mFilesResult.invoke(it as ArrayList<File>)
             }
         }
     }
+    //</editor-fold>
+
+    //<editor-fold desc="permissions">
+
+    fun checkPermissions(permission: Array<String>, callback: (result: Map<String, Boolean>) -> Unit ){
+        mPermissionsResult = callback
+
+        mPermissionsLauncher.launch(permission)
+
+    }
+
+    fun checkPermission(permission: String, callback: (success: Boolean) -> Unit ){
+        mPermissionResult = callback
+
+        mPermissionLauncher.launch(permission)
+
+    }
+
+    //</editor-fold>
+
+    //<editor-fold desc="takePicture">
+
+    private fun recipientPhoto(success: Boolean){
+        when(success){
+            true -> {
+                mPhotoResult.invoke(photoFile)
+            }
+            false -> {
+                mPhotoResult.invoke("Error")
+            }
+        }
+    }
+
+    fun takePhoto(authority: String, callBack: (result: Any) -> Unit){
+        checkPermission(Manifest.permission.CAMERA){
+            if(it){
+                try {
+                    mPhotoResult = callBack
+                    photoFile = FileUtil.createTempFile(Date().time.toString().plus(IMAGE_EXTENSION))
+                    mCameraLauncher.launch(
+                        FileProvider.getUriForFile(
+                            activity,
+                            authority,
+                            photoFile
+                        )
+                    )
+                } catch (ex: IOException) {
+                    ex.message?.let { callBack.invoke(it) }
+                }
+            }
+        }
+
+    }
+
+    //</editor-fold>
+
 }
