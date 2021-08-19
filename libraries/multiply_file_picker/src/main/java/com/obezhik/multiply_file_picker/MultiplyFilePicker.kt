@@ -15,6 +15,7 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.IOException
 import java.util.*
@@ -106,7 +107,7 @@ class MultiplyFilePicker(private var activity: ComponentActivity, private var mR
     private fun recipientFiles(uris: List<Uri>){
         activity.lifecycleScope.launch(Dispatchers.IO) {
             FileUtil.from(activity, uris).let {
-                activity.lifecycleScope.launch(Dispatchers.Main){
+                withContext(Dispatchers.Main){
                     mFilesResult.invoke(it)
                 }
                            }
