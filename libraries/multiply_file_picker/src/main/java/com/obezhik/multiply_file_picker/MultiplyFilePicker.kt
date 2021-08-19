@@ -106,8 +106,10 @@ class MultiplyFilePicker(private var activity: ComponentActivity, private var mR
     private fun recipientFiles(uris: List<Uri>){
         activity.lifecycleScope.launch(Dispatchers.IO) {
             FileUtil.from(activity, uris).let {
-                mFilesResult.invoke(it)
-            }
+                activity.lifecycleScope.launch(Dispatchers.Main){
+                    mFilesResult.invoke(it)
+                }
+                           }
         }
     }
     //</editor-fold>
