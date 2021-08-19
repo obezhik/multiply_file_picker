@@ -11,34 +11,29 @@ import java.io.File
 class MainActivity : AppCompatActivity() {
 
     lateinit var openBtn: Button
+    lateinit var filePicker: MultiplyFilePicker
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        val filePicker = MultiplyFilePicker(this)
+        filePicker = MultiplyFilePicker(this)
 
         openBtn = findViewById(R.id.open)
 
         openBtn.setOnClickListener {
 
-      /*  filePicker
-                .checkPermissions(arrayOf(Manifest.permission.CAMERA, Manifest.permission.ACCESS_FINE_LOCATION)){
-                println(it)
-            }*/
-
-          filePicker.takePhoto(applicationContext.packageName + ".provider"){
-                when(it){
-                    is File -> { println(it.name)   }
-                    is String -> { println(it) }
+            filePicker.takePhoto(applicationContext.packageName + ".provider"){
+                if(it.success){
+                    it.photo?.name
                 }
             }
 
-          /*  filePicker.selectAnyFiles{
-                it.forEach { f ->
-                    println(f.absolutePath + " - " + f.name + " size: " + f.totalSpace)
-                }
-               }*/
         }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        filePicker.removeObservables()
     }
 }

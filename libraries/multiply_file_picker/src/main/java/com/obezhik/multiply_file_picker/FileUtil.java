@@ -3,6 +3,7 @@ package com.obezhik.multiply_file_picker;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Build;
 import android.provider.OpenableColumns;
 
 import androidx.annotation.WorkerThread;
@@ -27,7 +28,18 @@ public class FileUtil {
 			InputStream in = new FileInputStream(srcFile);
 			OutputStream out = new FileOutputStream(destFile)
 		) {
-			IOUtils.copyLarge(in, out);
+			if (Build.VERSION.SDK_INT > 25) {
+				IOUtils.copyLarge(in, out);
+			} else {
+				try {
+					int c;
+					while ((c = in.read()) != -1) {
+						out.write(c);
+					}
+				}catch (Exception e){
+					e.printStackTrace();
+				}
+			}
 		}
 	}
 
@@ -37,7 +49,18 @@ public class FileUtil {
 			InputStream in = context.getContentResolver().openInputStream(srcUri);
 			OutputStream out = new FileOutputStream(destFile)
 		) {
-			IOUtils.copyLarge(in, out);
+			if (Build.VERSION.SDK_INT > 25) {
+				IOUtils.copyLarge(in, out);
+			} else {
+				try {
+					int c;
+					while ((c = in.read()) != -1) {
+						out.write(c);
+					}
+				}catch (Exception e){
+					e.printStackTrace();
+				}
+			}
 		}
 	}
 
@@ -68,8 +91,8 @@ public class FileUtil {
 	}
 
 	@WorkerThread
-	public static List<File> from(Context context, List<Uri> uris) throws IOException {
-		List<File> result = new ArrayList<>();
+	public static ArrayList<File> from(Context context, List<Uri> uris) throws IOException {
+		ArrayList<File> result = new ArrayList<>();
 
 		for (Uri uri : uris) {
 			result.add(from(context, uri));

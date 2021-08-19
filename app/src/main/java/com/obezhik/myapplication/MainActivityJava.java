@@ -18,14 +18,5 @@ public class MainActivityJava extends AppCompatActivity {
 
         MultiplyFilePicker filePicker = new MultiplyFilePicker(this);
 
-        filePicker.takePhoto("", result -> {
-            if (result instanceof File){
-               // ((File) result).exists();
-            }else {
-                Log.d("TAG", (String) result);
-            }
-
-            return null;
-        });
     }
 }
