@@ -165,5 +165,4 @@ class MultiplyFilePicker(private var activity: ComponentActivity, private var mR
     //</editor-fold>
 
     data class PhotoResult(val  success: Boolean, val photo: File?)
-
 }
