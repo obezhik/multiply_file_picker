@@ -18,6 +18,10 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.IOException
+import java.text.DateFormatSymbols
+import java.text.SimpleDateFormat
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 import java.util.*
 import kotlin.collections.ArrayList
 
@@ -150,7 +154,7 @@ class MultiplyFilePicker(private var activity: ComponentActivity, private var mR
           //  if(it){
                 try {
                     mPhotoResult = callBack
-                    photoFile = FileUtil.createTempFile(Date().time.toString().plus(IMAGE_EXTENSION))
+                    photoFile = FileUtil.createTempFile(getDateFormat().plus(IMAGE_EXTENSION))
                     mCameraLauncher.launch(
                         FileProvider.getUriForFile(
                             activity,
@@ -166,6 +170,11 @@ class MultiplyFilePicker(private var activity: ComponentActivity, private var mR
     }
 
     //</editor-fold>
+
+    fun getDateFormat(): String {
+        val format = SimpleDateFormat("yyyyMMddHHmmssSSS", Locale.ENGLISH);
+        return format.format(Date())
+    }
 
     data class PhotoResult(val  success: Boolean, val photo: File?)
 }
